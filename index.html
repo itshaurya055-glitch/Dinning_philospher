@@ -254,6 +254,22 @@
       .live-metrics-card {
         margin-top: 0;
       }
+      #panel-stats .log-container {
+        max-height: 95px;
+      }
+      #panel-stats .stats-grid {
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 6px;
+      }
+      #panel-stats .stat-box {
+        padding: 8px;
+      }
+      #panel-stats .stat-title {
+        font-size: 9px;
+      }
+      #panel-stats .stat-number {
+        font-size: 16px;
+      }
     }
 
     @media (max-width: 1023px) {
@@ -1276,16 +1292,6 @@
 </div>
 </div>
 </div>
-<!-- 4. Event Stream Card -->
-<div class="card">
-<div class="card-title">
-<span>Event Stream</span>
-<button class="btn-header" id="btnClearLog" style="padding:2px 8px; font-size:10px;">Clear</button>
-</div>
-<div class="log-container" id="eventLogContainer">
-<!-- Log entries reverse order -->
-</div>
-</div>
 </div>
 </main>
 <!-- MODAL 1: Instructions -->
@@ -1529,6 +1535,7 @@
     // --- EVENT LOGGING ---
     function logEvent(message, type = 'thinking') {
       const container = document.getElementById('eventLogContainer');
+      if (!container) return;
       const now = new Date();
       const timeStr = now.toTimeString().split(' ')[0] + '.' + Math.floor(now.getMilliseconds() / 100);
 
@@ -1997,10 +2004,16 @@
     });
 
     // Clear event log
-    document.getElementById('btnClearLog').addEventListener('click', () => {
-      document.getElementById('eventLogContainer').innerHTML = '';
-      logEvent('Log stream cleared.', 'fork');
-    });
+    const clearLogBtn = document.getElementById('btnClearLog');
+    if (clearLogBtn) {
+      clearLogBtn.addEventListener('click', () => {
+        const logContainer = document.getElementById('eventLogContainer');
+        if (logContainer) {
+          logContainer.innerHTML = '';
+          logEvent('Log stream cleared.', 'fork');
+        }
+      });
+    }
 
     // Modals
     const modalInst = document.getElementById('modalInstructions');
