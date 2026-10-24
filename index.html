@@ -1,0 +1,2042 @@
+<!DOCTYPE html>
+
+<html lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" name="viewport"/>
+<title>Dining Philosophers Simulation</title>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;600&amp;family=Inter:wght@400;500;600;700&amp;family=Outfit:wght@500;600;700;800&amp;display=swap" rel="stylesheet"/>
+<style>
+    :root {
+      --bg: #0a0a0a;
+      --card-bg: #141414;
+      --card-border: #262626;
+      --card-border-subtle: rgba(255, 255, 255, 0.08);
+      --accent-white: #ffffff;
+      --accent-gray: #a3a3a3;
+      --state-thinking: #60a5fa;
+      --state-hungry: #facc15;
+      --state-eating: #4ade80;
+      --state-deadlock: #f87171;
+      --fork-free: #34d399;
+      --fork-held: #f87171;
+      --font-ui: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      --font-heading: 'Outfit', sans-serif;
+      --font-code: 'Fira Code', monospace;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    body {
+      background-color: var(--bg);
+      color: #ededed;
+      font-family: var(--font-ui);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      overflow-x: hidden;
+    }
+
+    /* HEADER */
+    header {
+      position: sticky;
+      top: 0;
+      z-index: 50;
+      background: #0d0d0d;
+      border-bottom: 1px solid var(--card-border);
+      padding: 12px 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .header-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .brand-logo {
+      font-size: 22px;
+      display: inline-block;
+    }
+
+    .brand-text h1 {
+      font-family: var(--font-heading);
+      font-size: 16px;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      color: #ffffff;
+    }
+
+    .brand-text p {
+      font-size: 11px;
+      color: #737373;
+    }
+
+    .header-actions {
+      display: flex;
+      gap: 6px;
+    }
+
+    .btn-header {
+      background: #171717;
+      border: 1px solid var(--card-border);
+      color: #d4d4d4;
+      padding: 6px 12px;
+      border-radius: 6px;
+      font-size: 12px;
+      font-weight: 500;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      transition: all 0.15s ease;
+    }
+    .btn-header:hover {
+      background: #262626;
+      border-color: #404040;
+      color: #ffffff;
+    }
+
+    .speed-control {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: #141414;
+      border: 1px solid var(--card-border);
+      border-radius: 6px;
+      padding: 6px 12px;
+      font-size: 12px;
+    }
+    .speed-slider-wrap {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex: 1;
+      margin-left: 14px;
+    }
+    .speed-slider-wrap input[type="range"] {
+      flex: 1;
+      accent-color: #ffffff;
+      height: 4px;
+      cursor: pointer;
+      background: #262626;
+    }
+
+    /* TABS FOR MOBILE NAVIGATION */
+    .mobile-nav-tabs {
+      display: flex;
+      background: #111111;
+      border-bottom: 1px solid var(--card-border);
+      position: sticky;
+      top: 66px;
+      z-index: 40;
+    }
+    .tab-btn {
+      flex: 1;
+      background: transparent;
+      border: none;
+      color: #737373;
+      padding: 10px 4px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      border-bottom: 2px solid transparent;
+      transition: all 0.15s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+    }
+    .tab-btn.active {
+      color: #ffffff;
+      border-bottom-color: #ffffff;
+      background: #171717;
+    }
+
+    /* MAIN CONTAINER - 3-col on wide screens and tabs on mobile */
+    .app-main {
+      flex: 1;
+      max-width: 1400px;
+      margin: 0 auto;
+      width: 100%;
+      padding: 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    @media (min-width: 1024px) {
+      html, body {
+        height: 100vh;
+        overflow: hidden;
+      }
+      header {
+        padding: 8px 12px;
+      }
+      .brand-logo {
+        font-size: 18px;
+      }
+      .brand-text h1 {
+        font-size: 14px;
+      }
+      .brand-text p {
+        display: none;
+      }
+      .btn-header {
+        padding: 5px 10px;
+        font-size: 11px;
+      }
+      .mobile-nav-tabs {
+        display: none;
+      }
+      .app-main {
+        display: grid;
+        grid-template-columns: minmax(280px, 0.95fr) minmax(420px, 1.2fr) minmax(280px, 1fr);
+        gap: 12px;
+        padding: 12px;
+        height: calc(100vh - 58px);
+        align-items: start;
+      }
+      .panel {
+        display: flex !important;
+        min-height: 0;
+        gap: 12px;
+        overflow: hidden;
+      }
+      #panel-controls,
+      #panel-stats,
+      #panel-table {
+        overflow: auto;
+        padding-right: 2px;
+      }
+      #panel-stats {
+        position: relative;
+      }
+      .card {
+        padding: 12px;
+        gap: 10px;
+      }
+      .card-title {
+        font-size: 12px;
+        padding-bottom: 6px;
+      }
+      .btn-action,
+      .segmented-btn {
+        font-size: 11px;
+        padding-top: 7px;
+        padding-bottom: 7px;
+      }
+      table.state-table th,
+      table.state-table td {
+        padding: 5px 5px;
+      }
+      .log-entry {
+        font-size: 10px;
+        padding: 4px 7px;
+      }
+      .stat-number {
+        font-size: 18px;
+      }
+      .live-metrics-card {
+        margin-top: 0;
+      }
+    }
+
+    @media (max-width: 1023px) {
+      .panel {
+        display: none;
+      }
+      .panel.active-panel {
+        display: flex;
+      }
+    }
+
+    .panel {
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    /* CARD STYLING */
+    .card {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 8px;
+      padding: 16px;
+      box-shadow: none;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      position: relative;
+    }
+
+    .card-title {
+      font-family: var(--font-heading);
+      font-size: 13px;
+      font-weight: 600;
+      color: #f5f5f5;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      letter-spacing: -0.01em;
+      border-bottom: 1px solid var(--card-border);
+      padding-bottom: 8px;
+    }
+
+    .card-title span.badge {
+      font-size: 11px;
+      font-family: var(--font-code);
+      background: #1a1a1a;
+      border: 1px solid #333333;
+      padding: 2px 8px;
+      border-radius: 4px;
+      color: #a3a3a3;
+    }
+
+    /* BUTTONS & CONTROLS */
+    .controls-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
+    }
+
+    .btn-action {
+      padding: 9px 8px;
+      border-radius: 6px;
+      font-weight: 600;
+      font-size: 12px;
+      cursor: pointer;
+      border: 1px solid transparent;
+      transition: all 0.15s ease;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 4px;
+    }
+    .btn-action:active {
+      transform: translateY(1px);
+    }
+
+    .btn-start {
+      background: #ffffff;
+      color: #000000;
+      border-color: #ffffff;
+    }
+    .btn-start:hover {
+      background: #e5e5e5;
+    }
+    .btn-start.running {
+      background: #262626;
+      color: #f5f5f5;
+      border-color: #404040;
+    }
+
+    .btn-reset {
+      background: #171717;
+      color: #e5e5e5;
+      border: 1px solid var(--card-border);
+    }
+    .btn-reset:hover {
+      background: #262626;
+      border-color: #404040;
+    }
+
+    .btn-auto {
+      background: #171717;
+      color: #e5e5e5;
+      border: 1px solid var(--card-border);
+    }
+    .btn-auto:hover {
+      background: #262626;
+      border-color: #404040;
+    }
+    .btn-auto.active {
+      background: #ffffff;
+      color: #000000;
+      border-color: #ffffff;
+    }
+
+    .form-row {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    .form-row label {
+      font-size: 11px;
+      color: #737373;
+      font-weight: 500;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+
+    .segmented-control {
+      display: flex;
+      background: #0f0f0f;
+      border: 1px solid var(--card-border);
+      border-radius: 6px;
+      padding: 2px;
+      gap: 2px;
+    }
+    .segmented-btn {
+      flex: 1;
+      background: transparent;
+      border: none;
+      color: #737373;
+      font-size: 12px;
+      font-weight: 600;
+      padding: 6px 0;
+      border-radius: 4px;
+      cursor: pointer;
+      transition: all 0.15s;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .segmented-btn.active {
+      background: #262626;
+      color: #ffffff;
+    }
+    .segmented-btn:not(.active):hover {
+      color: #d4d4d4;
+    }
+
+    /* ACTIONS / PHILOSOPHER BUTTONS */
+    .phil-buttons-grid {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    .phil-btn {
+      position: relative;
+      background: #171717;
+      border: 1px solid var(--card-border);
+      border-radius: 6px;
+      padding: 9px 12px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      cursor: pointer;
+      color: #ededed;
+      transition: background 0.15s, border-color 0.15s;
+      overflow: hidden;
+    }
+    .phil-btn:not(:disabled):hover {
+      background: #1f1f1f;
+      border-color: #404040;
+    }
+    .phil-btn:disabled {
+      opacity: 0.4;
+      cursor: not-allowed;
+    }
+    .phil-btn-bar {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: 2px;
+      background: #404040;
+      transition: background 0.2s;
+    }
+    .phil-info-left {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .phil-avatar {
+      font-size: 18px;
+    }
+    .phil-name {
+      font-weight: 600;
+      font-size: 12px;
+      display: block;
+      color: #ffffff;
+    }
+    .phil-status-sub {
+      font-size: 11px;
+      color: #737373;
+    }
+    .phil-meals-badge {
+      font-size: 11px;
+      background: #0f0f0f;
+      border: 1px solid var(--card-border);
+      padding: 2px 7px;
+      border-radius: 4px;
+      font-weight: 600;
+      font-family: var(--font-code);
+      color: #d4d4d4;
+    }
+
+    .legend-dots {
+      display: flex;
+      justify-content: space-around;
+      padding-top: 8px;
+      border-top: 1px solid var(--card-border);
+      font-size: 11px;
+      color: #737373;
+    }
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+    .dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+    }
+
+    /* STATE TABLE CARD */
+    .table-wrap {
+      overflow-x: auto;
+    }
+    table.state-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 12px;
+    }
+    table.state-table th, table.state-table td {
+      padding: 7px 6px;
+      text-align: center;
+      border-bottom: 1px solid var(--card-border);
+    }
+    table.state-table th {
+      color: #737373;
+      font-weight: 600;
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+    .status-badge {
+      display: inline-block;
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-size: 10px;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+    }
+    .status-badge.thinking { background: #172554; color: #93c5fd; border: 1px solid #1e3a8a; }
+    .status-badge.hungry { background: #422006; color: #fde047; border: 1px solid #713f12; }
+    .status-badge.eating { background: #052e16; color: #86efac; border: 1px solid #14532d; }
+
+    .fork-tag {
+      font-weight: 600;
+      font-size: 11px;
+      display: inline-flex;
+      align-items: center;
+      gap: 3px;
+    }
+    .fork-tag.free { color: var(--fork-free); }
+    .fork-tag.held { color: var(--fork-held); }
+
+    /* EVENT LOG CARD */
+    .log-container {
+      max-height: clamp(120px, 18vh, 180px);
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      padding-right: 4px;
+    }
+    .log-container::-webkit-scrollbar {
+      width: 4px;
+    }
+    .log-container::-webkit-scrollbar-thumb {
+      background: #333333;
+      border-radius: 4px;
+    }
+    .log-entry {
+      font-size: 11px;
+      font-family: var(--font-code);
+      padding: 5px 8px;
+      border-radius: 4px;
+      background: #0f0f0f;
+      border-left: 2px solid #404040;
+      line-height: 1.4;
+    }
+    .log-entry.thinking { border-left-color: #3b82f6; color: #bfdbfe; }
+    .log-entry.hungry { border-left-color: #eab308; color: #fef08a; }
+    .log-entry.eating { border-left-color: #22c55e; color: #bbf7d0; }
+    .log-entry.deadlock { border-left-color: #ef4444; color: #fecaca; background: #261111; }
+    .log-entry.fork { border-left-color: #737373; color: #d4d4d4; }
+    .log-time {
+      color: #525252;
+      margin-right: 6px;
+      font-size: 10px;
+    }
+
+    /* CENTER PANEL — CANVAS AREA */
+    .canvas-panel {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .canvas-card {
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 16px;
+      position: relative;
+    }
+
+    .table-controls-card {
+      width: 100%;
+      max-width: min(540px, 100%);
+    }
+
+    .canvas-container {
+      position: relative;
+      width: 100%;
+      max-width: min(46vh, 34vw, 460px);
+      aspect-ratio: 1/1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    #simCanvas {
+      width: 100%;
+      height: 100%;
+      max-width: 100%;
+      max-height: 100%;
+      border-radius: 50%;
+      display: block;
+      border: 1px solid var(--card-border);
+    }
+
+    /* DEADLOCK BANNER */
+    .deadlock-banner {
+      width: 100%;
+      background: #1a0f0f;
+      border: 1px solid #7f1d1d;
+      border-radius: 6px;
+      padding: 10px 14px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      color: #fca5a5;
+    }
+    .deadlock-banner.hidden {
+      display: none;
+    }
+    .deadlock-icon {
+      font-size: 22px;
+    }
+    .deadlock-text h4 {
+      font-family: var(--font-heading);
+      font-size: 13px;
+      font-weight: 700;
+      color: #ef4444;
+      letter-spacing: 0.02em;
+    }
+    .deadlock-text p {
+      font-size: 11px;
+      color: #f87171;
+      margin-top: 2px;
+    }
+
+    /* RIGHT PANEL CARDS */
+    /* PSEUDO CODE CARD */
+    .code-block {
+      background: #0d0d0d;
+      border: 1px solid var(--card-border);
+      border-radius: 6px;
+      padding: 10px;
+      font-family: var(--font-code);
+      font-size: 11px;
+      line-height: 1.6;
+      overflow-x: auto;
+    }
+    .code-line {
+      padding: 2px 8px;
+      border-radius: 3px;
+      transition: background 0.15s ease, color 0.15s ease;
+      color: #737373;
+      white-space: pre;
+    }
+    .code-line.active {
+      background: #1f1f1f;
+      color: #ffffff;
+      border-left: 2px solid #ffffff;
+    }
+    .code-line.wait-active {
+      background: #231c07;
+      color: #fde047;
+      border-left: 2px solid var(--state-hungry);
+    }
+    .code-line.eat-active {
+      background: #082313;
+      color: #86efac;
+      border-left: 2px solid var(--state-eating);
+    }
+    .code-line.signal-active {
+      background: #262626;
+      color: #e5e5e5;
+      border-left: 2px solid #a3a3a3;
+    }
+
+    /* STATE ARRAYS CARD */
+    .arrays-group {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .array-row {
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+    }
+    .array-label {
+      font-size: 11px;
+      color: #737373;
+      font-weight: 500;
+    }
+    .array-cells {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+    .array-cell {
+      min-width: 32px;
+      height: 30px;
+      border-radius: 4px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: var(--font-code);
+      font-size: 11px;
+      font-weight: 600;
+      border: 1px solid var(--card-border);
+      background: #171717;
+      color: #d4d4d4;
+      transition: all 0.15s;
+    }
+    .cell-t { background: #111827; color: #93c5fd; border-color: #1e3a8a; }
+    .cell-h { background: #261e05; color: #fde047; border-color: #713f12; }
+    .cell-e { background: #052613; color: #86efac; border-color: #14532d; }
+    .cell-free { background: #052613; color: var(--fork-free); border-color: #14532d; }
+    .cell-held { background: #260d0d; color: var(--fork-held); border-color: #7f1d1d; }
+
+    /* COMMENT CARD */
+    .comment-box {
+      background: #0f0f0f;
+      border-left: 2px solid #ffffff;
+      border-top: 1px solid var(--card-border);
+      border-right: 1px solid var(--card-border);
+      border-bottom: 1px solid var(--card-border);
+      padding: 10px 12px;
+      border-radius: 4px;
+      font-size: 12px;
+      line-height: 1.5;
+      color: #d4d4d4;
+      min-height: 44px;
+      display: flex;
+      align-items: center;
+    }
+
+    /* STATISTICS CARD */
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 8px;
+    }
+    .stat-box {
+      background: #171717;
+      border: 1px solid var(--card-border);
+      border-radius: 6px;
+      padding: 10px;
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+    .stat-title {
+      font-size: 10px;
+      color: #737373;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+    .stat-number {
+      font-family: var(--font-heading);
+      font-size: 20px;
+      font-weight: 700;
+      line-height: 1.1;
+    }
+    .stat-thinking { color: #93c5fd; }
+    .stat-hungry { color: #fde047; }
+    .stat-eating { color: #86efac; }
+    .stat-deadlock { color: #f87171; }
+
+    /* MODALS */
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.85);
+      z-index: 100;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.2s ease;
+    }
+    .modal-overlay.open {
+      opacity: 1;
+      pointer-events: auto;
+    }
+    .modal-card {
+      background: #141414;
+      border: 1px solid #333333;
+      border-radius: 8px;
+      max-width: 500px;
+      width: 100%;
+      max-height: 85vh;
+      overflow-y: auto;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+    .modal-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 1px solid var(--card-border);
+      padding-bottom: 12px;
+    }
+    .modal-header h3 {
+      font-family: var(--font-heading);
+      font-size: 16px;
+      color: #ffffff;
+    }
+    .modal-close-btn {
+      background: #1f1f1f;
+      border: 1px solid var(--card-border);
+      color: #d4d4d4;
+      width: 28px;
+      height: 28px;
+      border-radius: 4px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 15px;
+      cursor: pointer;
+    }
+    .modal-close-btn:hover {
+      background: #262626;
+      color: #ffffff;
+    }
+    .modal-body {
+      font-size: 13px;
+      line-height: 1.6;
+      color: #d4d4d4;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+    .modal-body ul, .modal-body ol {
+      padding-left: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    .modal-highlight {
+      background: #1f1f1f;
+      border-left: 2px solid #ffffff;
+      padding: 8px 12px;
+      border-radius: 4px;
+      font-size: 12px;
+      color: #ffffff;
+    }
+    .modal-body code {
+      background: #1f1f1f;
+      padding: 2px 5px;
+      border-radius: 4px;
+      font-family: var(--font-code);
+      font-size: 11px;
+      border: 1px solid #333;
+    }
+
+    /* LIGHT THEME OVERRIDES */
+    :root {
+      --bg: #f3f6fb;
+      --card-bg: #ffffff;
+      --card-border: #d9e2ef;
+      --card-border-subtle: rgba(15, 23, 42, 0.12);
+      --accent-white: #0f172a;
+      --accent-gray: #64748b;
+      --state-thinking: #3b82f6;
+      --state-hungry: #d97706;
+      --state-eating: #16a34a;
+      --state-deadlock: #dc2626;
+      --fork-free: #059669;
+      --fork-held: #dc2626;
+    }
+
+    body {
+      background-color: var(--bg);
+      color: #0f172a;
+    }
+
+    header {
+      background: #eef3fb;
+      border-bottom-color: #cfd9e8;
+    }
+
+    .mobile-nav-tabs {
+      background: #eaf0fa;
+      border-bottom-color: #cfd9e8;
+    }
+
+    .tab-btn {
+      color: #64748b;
+    }
+
+    .tab-btn.active {
+      color: #1e3a8a;
+      border-bottom-color: #3b82f6;
+      background: #ffffff;
+    }
+
+    .card {
+      box-shadow: 0 4px 16px rgba(15, 23, 42, 0.06);
+    }
+
+    .card-title {
+      color: #0f172a;
+    }
+
+    .card-title span.badge {
+      background: #eff4fb;
+      border-color: #d3deed;
+      color: #475569;
+    }
+
+    .btn-header,
+    .btn-reset,
+    .btn-auto,
+    .phil-btn,
+    .array-cell,
+    .stat-box,
+    .code-block,
+    .comment-box,
+    .modal-card {
+      background: #f8fbff;
+      color: #0f172a;
+      border-color: #d9e2ef;
+    }
+
+    .btn-header:hover,
+    .btn-reset:hover,
+    .btn-auto:hover,
+    .phil-btn:not(:disabled):hover {
+      background: #eef4fd;
+      border-color: #c7d5ea;
+      color: #0f172a;
+    }
+
+    .btn-start.running,
+    .btn-auto.active {
+      background: #dbeafe;
+      color: #1e3a8a;
+      border-color: #93c5fd;
+    }
+
+    .segmented-control,
+    .speed-control {
+      background: #f8fbff;
+      border-color: #d9e2ef;
+    }
+
+    .segmented-btn {
+      color: #64748b;
+    }
+
+    .segmented-btn.active {
+      background: #eaf2ff;
+      color: #1e3a8a;
+    }
+
+    .phil-name,
+    table.state-table td,
+    .array-label,
+    .stat-title,
+    .brand-text p,
+    .log-time {
+      color: #64748b;
+    }
+
+    table.state-table th,
+    .brand-text h1 {
+      color: #0f172a;
+    }
+
+    .log-entry {
+      background: #f8fbff;
+      border-left-color: #cbd5e1;
+      color: #334155;
+    }
+
+    .log-entry.thinking {
+      background: #eff6ff;
+      border-left-color: #3b82f6;
+      color: #1d4ed8;
+    }
+
+    .log-entry.hungry {
+      background: #fffbeb;
+      border-left-color: #f59e0b;
+      color: #b45309;
+    }
+
+    .log-entry.eating {
+      background: #ecfdf5;
+      border-left-color: #22c55e;
+      color: #15803d;
+    }
+
+    .log-entry.deadlock {
+      background: #fef2f2;
+      border-left-color: #ef4444;
+      color: #b91c1c;
+    }
+
+    .log-entry.fork {
+      background: #f1f5f9;
+      border-left-color: #94a3b8;
+      color: #334155;
+    }
+
+    .log-time {
+      color: #475569;
+    }
+
+    .fork-tag.free {
+      color: #047857;
+    }
+
+    .fork-tag.held {
+      color: #b91c1c;
+    }
+
+    .phil-status-sub {
+      color: #475569;
+    }
+
+    .code-block {
+      background: #f8fbff;
+    }
+
+    .code-line {
+      color: #64748b;
+    }
+
+    .code-line.active {
+      background: #e8f1ff;
+      color: #0f172a;
+      border-left-color: #3b82f6;
+    }
+
+    .code-line.wait-active {
+      background: #fff7e6;
+      color: #92400e;
+      border-left-color: #d97706;
+    }
+
+    .code-line.eat-active {
+      background: #e9fbe9;
+      color: #166534;
+      border-left-color: #16a34a;
+    }
+
+    .code-line.signal-active {
+      background: #eef2f7;
+      color: #1f2937;
+      border-left-color: #64748b;
+    }
+
+    .deadlock-banner {
+      background: #fff1f2;
+      border-color: #fecdd3;
+      color: #be123c;
+    }
+
+    .deadlock-text h4 {
+      color: #be123c;
+    }
+
+    .deadlock-text p {
+      color: #9f1239;
+    }
+
+    .modal-overlay {
+      background: rgba(15, 23, 42, 0.45);
+    }
+
+    .modal-header h3,
+    .modal-body,
+    .modal-highlight {
+      color: #0f172a;
+    }
+
+    .modal-highlight {
+      background: #eff6ff;
+      border-left-color: #3b82f6;
+    }
+
+    .modal-body code {
+      background: #eef2f7;
+      border-color: #cfd9e8;
+      color: #0f172a;
+    }
+  </style>
+</head>
+<body>
+<!-- HEADER -->
+<header>
+<div class="header-top">
+<div class="brand">
+<span class="brand-logo">🍜</span>
+<div class="brand-text">
+<h1>Dining Philosophers</h1>
+<p>Concurrency &amp; Synchronization Visualizer</p>
+</div>
+</div>
+<div class="header-actions">
+<button class="btn-header" id="btnInstructions">📖 Guide</button>
+<button class="btn-header" id="btnComponents">⚙️ Code</button>
+</div>
+</div>
+</header>
+<!-- MOBILE NAVIGATION TABS (visible only on mobile/tablet) -->
+<div class="mobile-nav-tabs">
+<button class="tab-btn active" data-target="panel-table">🍽️ Table</button>
+<button class="tab-btn" data-target="panel-controls">🎮 Controls</button>
+<button class="tab-btn" data-target="panel-stats">📊 Analysis</button>
+</div>
+<!-- MAIN 3-COLUMN CONTENT -->
+<main class="app-main">
+<!-- LEFT PANEL: Controls, Actions, State Table, Event Log -->
+<div class="panel" id="panel-controls">
+<!-- 1. Actions Card -->
+<div class="card">
+<div class="card-title">
+<span>Manual Step Actions</span>
+<span class="badge">Click to Advance</span>
+</div>
+<div class="phil-buttons-grid" id="philButtonsContainer">
+<!-- Dynamically generated philosopher buttons -->
+</div>
+<div class="legend-dots">
+<div class="legend-item"><span class="dot" style="background:var(--state-thinking)"></span> Thinking</div>
+<div class="legend-item"><span class="dot" style="background:var(--state-hungry)"></span> Hungry</div>
+<div class="legend-item"><span class="dot" style="background:var(--state-eating)"></span> Eating</div>
+</div>
+</div>
+<!-- 3. State Table Card -->
+<div class="card">
+<div class="card-title">
+<span>Process State Matrix</span>
+</div>
+<div class="table-wrap">
+<table class="state-table">
+<thead>
+<tr>
+<th>Phil</th>
+<th>State</th>
+<th>Left (C<sub>i</sub>)</th>
+<th>Right (C<sub>i+1</sub>)</th>
+<th>Meals</th>
+</tr>
+</thead>
+<tbody id="stateTableBody">
+<!-- Dynamically populated rows -->
+</tbody>
+</table>
+</div>
+</div>
+</div>
+<!-- CENTER PANEL: Canvas & Deadlock Banner -->
+<div class="panel canvas-panel active-panel" id="panel-table">
+<!-- Deadlock Warning Banner -->
+<div class="deadlock-banner hidden" id="deadlockBanner">
+<span class="deadlock-icon">⚠️</span>
+<div class="deadlock-text">
+<h4>DEADLOCK OCCURRED!</h4>
+<p>Circular wait detected: Every philosopher holds one chopstick and is blocked waiting for the other.</p>
+</div>
+</div>
+<div class="card canvas-card">
+<div class="canvas-container">
+<canvas height="480" id="simCanvas" width="480"></canvas>
+</div>
+</div>
+<div class="card table-controls-card">
+<div class="card-title">
+<span>Simulation Controls</span>
+<span class="badge" id="simStatusBadge">STOPPED</span>
+</div>
+<div class="controls-grid">
+<button class="btn-action btn-start" id="btnStart">▶ START</button>
+<button class="btn-action btn-reset" id="btnReset">↺ RESET</button>
+<button class="btn-action btn-auto" id="btnAuto">⚡ AUTO</button>
+</div>
+<div class="form-row">
+<label>Philosophers Count</label>
+<div class="segmented-control" id="philCountSelector">
+<button class="segmented-btn" data-count="3">3</button>
+<button class="segmented-btn" data-count="4">4</button>
+<button class="segmented-btn active" data-count="5">5</button>
+</div>
+</div>
+<div class="form-row">
+<label>Concurrency Strategy</label>
+<div class="segmented-control" id="solutionSelector">
+<button class="segmented-btn active" data-sol="naive">Naive (Deadlock Prone)</button>
+<button class="segmented-btn" data-sol="asymmetric">Asymmetric (Safe)</button>
+</div>
+</div>
+</div>
+</div>
+<!-- RIGHT PANEL: Pseudo Code, State Arrays, Comment, Statistics -->
+<div class="panel" id="panel-stats">
+<!-- 1. Pseudo Code Card -->
+<div class="card">
+<div class="card-title">
+<span>Algorithm Pseudo-code</span>
+</div>
+<div class="code-block" id="codeBlock">
+<div class="code-line" id="line-0">// Philosopher Process Loop</div>
+<div class="code-line" id="line-1">while (true) {</div>
+<div class="code-line" id="line-2">  THINKING();</div>
+<div class="code-line" id="line-3">  Wait(chopstick[left]);</div>
+<div class="code-line" id="line-4">  Wait(chopstick[right]);</div>
+<div class="code-line" id="line-5">  EATING();</div>
+<div class="code-line" id="line-6">  Signal(chopstick[left]);</div>
+<div class="code-line" id="line-7">  Signal(chopstick[right]);</div>
+<div class="code-line" id="line-8">}</div>
+</div>
+</div>
+<!-- 2. State Arrays Card -->
+<div class="card">
+<div class="card-title">
+<span>Shared Memory Arrays</span>
+</div>
+<div class="arrays-group">
+<div class="array-row">
+<span class="array-label">Philosopher States [T / H / E]:</span>
+<div class="array-cells" id="arrayStates"></div>
+</div>
+<div class="array-row">
+<span class="array-label">Chopstick Semaphores [1=Free, 0=Held]:</span>
+<div class="array-cells" id="arraySemaphores"></div>
+</div>
+<div class="array-row">
+<span class="array-label">Meals Consumed:</span>
+<div class="array-cells" id="arrayMeals"></div>
+</div>
+</div>
+</div>
+<!-- 3. Statistics Card -->
+<div class="card live-metrics-card">
+<div class="card-title">
+<span>Live Metrics</span>
+</div>
+<div class="stats-grid">
+<div class="stat-box">
+<span class="stat-title">Thinking</span>
+<span class="stat-number stat-thinking" id="statThinking">5</span>
+</div>
+<div class="stat-box">
+<span class="stat-title">Hungry</span>
+<span class="stat-number stat-hungry" id="statHungry">0</span>
+</div>
+<div class="stat-box">
+<span class="stat-title">Eating</span>
+<span class="stat-number stat-eating" id="statEating">0</span>
+</div>
+<div class="stat-box">
+<span class="stat-title">Deadlocks</span>
+<span class="stat-number stat-deadlock" id="statDeadlock">0</span>
+</div>
+</div>
+</div>
+<!-- 4. Event Stream Card -->
+<div class="card">
+<div class="card-title">
+<span>Event Stream</span>
+<button class="btn-header" id="btnClearLog" style="padding:2px 8px; font-size:10px;">Clear</button>
+</div>
+<div class="log-container" id="eventLogContainer">
+<!-- Log entries reverse order -->
+</div>
+</div>
+</div>
+</main>
+<!-- MODAL 1: Instructions -->
+<div class="modal-overlay" id="modalInstructions">
+<div class="modal-card">
+<div class="modal-header">
+<h3>How to Use the Simulation</h3>
+<button class="modal-close-btn" data-close="modalInstructions">×</button>
+</div>
+<div class="modal-body">
+<p>The <strong>Dining Philosophers Problem</strong> is a foundational synchronization problem formulated by Edsger Dijkstra in 1965 to illustrate resource allocation challenges and deadlock.</p>
+<ol>
+<li><strong>Start Simulation:</strong> Click the white <code>START</code> button to activate the table.</li>
+<li><strong>Manual Action:</strong> Under the <em>Manual Step Actions</em> card, click any philosopher button:
+            <ul>
+<li><strong>Step 1:</strong> Thinking → Hungry (Attempts to acquire first chopstick).</li>
+<li><strong>Step 2:</strong> Hungry (holds 1 fork) → Acquires second chopstick if available.</li>
+<li><strong>Step 3:</strong> Transition to Eating → Releases both forks and returns to Thinking.</li>
+</ul>
+</li>
+<li><strong>Triggering a Deadlock:</strong> In <em>Naive Mode</em>, make all philosophers hungry sequentially. Each will grab their left chopstick simultaneously, causing a circular wait deadlock.</li>
+<li><strong>Asymmetric Solution:</strong> Select <em>Asymmetric Mode</em> where philosopher P<sub>N-1</sub> picks up their right fork first, effectively breaking the circular dependency and preventing deadlock!</li>
+<li><strong>Auto Mode:</strong> Press <code>AUTO</code> to let the philosophers dynamically decide when to think, get hungry, and eat.</li>
+</ol>
+</div>
+</div>
+</div>
+<!-- MODAL 2: Components / Algorithm Explanation -->
+<div class="modal-overlay" id="modalComponents">
+<div class="modal-card">
+<div class="modal-header">
+<h3>Algorithm &amp; Components Breakdown</h3>
+<button class="modal-close-btn" data-close="modalComponents">×</button>
+</div>
+<div class="modal-body">
+<div class="modal-highlight">
+<strong>Key Invariant:</strong> To eat, a philosopher requires <em>both</em> adjacent chopsticks simultaneously.
+        </div>
+<p><strong>Code Operations:</strong></p>
+<ul>
+<li><code>THINKING()</code>: The thread executes independent work without needing shared resources.</li>
+<li><code>Wait(chopstick)</code>: Decrements semaphore (P operation). If the fork is held (semaphore = 0), the philosopher blocks until it becomes available.</li>
+<li><code>EATING()</code>: Critical section. Accessing shared plate using both mutual exclusion resources.</li>
+<li><code>Signal(chopstick)</code>: Increments semaphore (V operation), releasing resource ownership so adjacent neighbors can dine.</li>
+</ul>
+<p><strong>Deadlock Conditions Illustrated:</strong></p>
+<ul>
+<li><strong>Mutual Exclusion:</strong> Chopsticks cannot be shared.</li>
+<li><strong>Hold and Wait:</strong> Holding one chopstick while waiting for another.</li>
+<li><strong>No Preemption:</strong> Chopsticks cannot be forcibly taken.</li>
+<li><strong>Circular Wait:</strong> P0 waits for P1, P1 waits for P2... PN-1 waits for P0.</li>
+</ul>
+</div>
+</div>
+</div>
+<!-- JAVASCRIPT LOGIC -->
+<script>
+    // --- STATE DEFINITIONS ---
+    const STATE_THINKING = 'THINKING';
+    const STATE_HUNGRY = 'HUNGRY';
+    const STATE_EATING = 'EATING';
+
+    let N = 5; // default 5 philosophers
+    let solutionType = 'naive'; // 'naive' or 'asymmetric'
+    let isStarted = false;
+    let isAuto = false;
+    let autoIntervalId = null;
+    let speedMultiplier = 1;
+    let deadlockCount = 0;
+    let isDeadlocked = false;
+
+    // Simulation Data Structures
+    let philosophers = [];
+    let chopsticks = []; // 1 = free, 0 = held
+
+    // Canvas & Animation
+    const canvas = document.getElementById('simCanvas');
+    const ctx = canvas.getContext('2d');
+
+    // --- INITIALIZATION ---
+    function initSimulation() {
+      chopsticks = new Array(N).fill(1); // all free
+      philosophers = [];
+      for (let i = 0; i < N; i++) {
+        philosophers.push({
+          id: i,
+          state: STATE_THINKING,
+          step: 0, // 0: no fork, 1: holds 1 fork, 2: eating
+          leftForkHeld: false,
+          rightForkHeld: false,
+          meals: 0,
+          eatProgress: 0,
+          pulse: 0
+        });
+      }
+      isDeadlocked = false;
+      document.getElementById('deadlockBanner').classList.add('hidden');
+      updateUI();
+      logEvent('Simulation initialized with ' + N + ' philosophers (' + (solutionType === 'naive' ? 'Naive' : 'Asymmetric') + ').', 'fork');
+      setComment('Simulation initialized. Press START to enable controls.');
+    }
+
+    // --- CHOPSTICK ALLOCATION LOGIC ---
+    function getLeftForkIdx(i) {
+      return i; // chopstick between i and (i+1)%N
+    }
+    function getRightForkIdx(i) {
+      return (i + 1) % N;
+    }
+
+    function canTakeFork(forkIdx) {
+      return chopsticks[forkIdx] === 1;
+    }
+
+    function takeFork(forkIdx, philId, side) {
+      chopsticks[forkIdx] = 0;
+      if (side === 'left') philosophers[philId].leftForkHeld = true;
+      if (side === 'right') philosophers[philId].rightForkHeld = true;
+    }
+
+    function releaseForks(philId) {
+      const p = philosophers[philId];
+      const leftIdx = getLeftForkIdx(philId);
+      const rightIdx = getRightForkIdx(philId);
+
+      if (p.leftForkHeld) {
+        chopsticks[leftIdx] = 1;
+        p.leftForkHeld = false;
+      }
+      if (p.rightForkHeld) {
+        chopsticks[rightIdx] = 1;
+        p.rightForkHeld = false;
+      }
+    }
+
+    // --- STEP ACTION FOR PHILOSOPHER ---
+    function stepPhilosopher(i) {
+      if (!isStarted || isDeadlocked) return;
+
+      const p = philosophers[i];
+      highlightCodeLine(null);
+
+      // Determine fork acquisition order based on solution strategy
+      // In Asymmetric mode, last philosopher (N-1) takes right fork first
+      const isAsymmetricP = (solutionType === 'asymmetric' && i === N - 1);
+      const firstForkIdx = isAsymmetricP ? getRightForkIdx(i) : getLeftForkIdx(i);
+      const firstSide = isAsymmetricP ? 'right' : 'left';
+      const secondForkIdx = isAsymmetricP ? getLeftForkIdx(i) : getRightForkIdx(i);
+      const secondSide = isAsymmetricP ? 'left' : 'right';
+
+      if (p.state === STATE_THINKING) {
+        // Step 1: Thinking -> Hungry
+        p.state = STATE_HUNGRY;
+        p.step = 0;
+        highlightCodeLine(3, 'wait-active');
+        logEvent(`P${i} is now HUNGRY, attempting to acquire ${firstSide} fork (C${firstForkIdx}).`, 'hungry');
+        setComment(`Philosopher P${i} became Hungry and reaches for chopstick C${firstForkIdx}.`);
+
+        // Immediate attempt to grab first fork
+        if (canTakeFork(firstForkIdx)) {
+          takeFork(firstForkIdx, i, firstSide);
+          p.step = 1;
+          logEvent(`P${i} acquired ${firstSide} fork (C${firstForkIdx}).`, 'fork');
+          setComment(`P${i} successfully acquired ${firstSide} chopstick C${firstForkIdx}.`);
+        } else {
+          setComment(`P${i} is waiting: chopstick C${firstForkIdx} is currently held.`);
+        }
+      } 
+      else if (p.state === STATE_HUNGRY) {
+        if (p.step === 0) {
+          // Retry acquiring first fork
+          highlightCodeLine(3, 'wait-active');
+          if (canTakeFork(firstForkIdx)) {
+            takeFork(firstForkIdx, i, firstSide);
+            p.step = 1;
+            logEvent(`P${i} acquired ${firstSide} fork (C${firstForkIdx}).`, 'fork');
+            setComment(`P${i} grabbed ${firstSide} chopstick C${firstForkIdx}.`);
+          } else {
+            setComment(`P${i} tried to acquire C${firstForkIdx}, but it is still held!`);
+          }
+        } 
+        else if (p.step === 1) {
+          // Attempt acquiring second fork
+          highlightCodeLine(4, 'wait-active');
+          if (canTakeFork(secondForkIdx)) {
+            takeFork(secondForkIdx, i, secondSide);
+            p.step = 2;
+            p.state = STATE_EATING;
+            p.meals++;
+            highlightCodeLine(5, 'eat-active');
+            logEvent(`P${i} acquired ${secondSide} fork (C${secondForkIdx}) and is now EATING! 🍜`, 'eating');
+            setComment(`P${i} now holds both chopsticks (C${getLeftForkIdx(i)}, C${getRightForkIdx(i)}) and starts Eating!`);
+          } else {
+            setComment(`P${i} holds one fork, waiting for ${secondSide} chopstick C${secondForkIdx}.`);
+          }
+        }
+      } 
+      else if (p.state === STATE_EATING) {
+        // Step 3: Eating -> Signal & Thinking
+        releaseForks(i);
+        p.state = STATE_THINKING;
+        p.step = 0;
+        highlightCodeLine(6, 'signal-active');
+        logEvent(`P${i} finished eating, signaled both forks, and returned to THINKING. 🤔`, 'thinking');
+        setComment(`P${i} finished meal #${p.meals}, released chopsticks, and resumed Thinking.`);
+      }
+
+      checkDeadlock();
+      updateUI();
+    }
+
+    // --- DEADLOCK DETECTION ---
+    function checkDeadlock() {
+      const allHungryHoldingOne = philosophers.every(p => p.state === STATE_HUNGRY && (p.leftForkHeld || p.rightForkHeld));
+      const allForksHeld = chopsticks.every(c => c === 0);
+
+      if (allHungryHoldingOne && allForksHeld && !isDeadlocked) {
+        isDeadlocked = true;
+        deadlockCount++;
+        document.getElementById('deadlockBanner').classList.remove('hidden');
+        logEvent('🚨 DEADLOCK DETECTED! Circular wait condition reached.', 'deadlock');
+        setComment('DEADLOCK! All philosophers hold one fork and wait indefinitely. Circular wait cannot resolve without preemption or asymmetric strategy.');
+        if (isAuto) toggleAuto(false);
+      }
+    }
+
+    // --- PSEUDO-CODE HIGHLIGHTING ---
+    function highlightCodeLine(lineIndex, activeClass = 'active') {
+      const lines = document.querySelectorAll('.code-line');
+      lines.forEach(l => {
+        l.className = 'code-line';
+      });
+      if (lineIndex !== null) {
+        const target = document.getElementById(`line-${lineIndex}`);
+        if (target) {
+          target.className = `code-line ${activeClass}`;
+        }
+      }
+    }
+
+    // --- EVENT LOGGING ---
+    function logEvent(message, type = 'thinking') {
+      const container = document.getElementById('eventLogContainer');
+      const now = new Date();
+      const timeStr = now.toTimeString().split(' ')[0] + '.' + Math.floor(now.getMilliseconds() / 100);
+
+      const entry = document.createElement('div');
+      entry.className = `log-entry ${type}`;
+      entry.innerHTML = `<span class="log-time">[${timeStr}]</span> ${message}`;
+
+      container.insertBefore(entry, container.firstChild);
+
+      // Max 80 entries
+      while (container.children.length > 80) {
+        container.removeChild(container.lastChild);
+      }
+    }
+
+    function setComment(text) {
+      const commentEl = document.getElementById('actionComment');
+      if (commentEl) commentEl.textContent = text;
+    }
+
+    // --- UI UPDATES ---
+    function updateUI() {
+      // 1. Sim Status Badge
+      const statusBadge = document.getElementById('simStatusBadge');
+      if (!isStarted) {
+        statusBadge.textContent = 'STOPPED';
+        statusBadge.style.color = '#737373';
+        statusBadge.style.borderColor = '#262626';
+      } else if (isDeadlocked) {
+        statusBadge.textContent = 'DEADLOCKED';
+        statusBadge.style.color = 'var(--state-deadlock)';
+        statusBadge.style.borderColor = '#7f1d1d';
+      } else if (isAuto) {
+        statusBadge.textContent = 'AUTO RUNNING';
+        statusBadge.style.color = '#ffffff';
+        statusBadge.style.borderColor = '#525252';
+      } else {
+        statusBadge.textContent = 'MANUAL READY';
+        statusBadge.style.color = '#ffffff';
+        statusBadge.style.borderColor = '#525252';
+      }
+
+      // 2. Philosopher Action Buttons
+      const btnContainer = document.getElementById('philButtonsContainer');
+      btnContainer.innerHTML = '';
+      philosophers.forEach(p => {
+        const btn = document.createElement('button');
+        btn.className = 'phil-btn';
+        btn.disabled = !isStarted || isDeadlocked;
+
+        let stateBarColor = '#333333';
+        let emoji = '🤔';
+        let subText = 'Thinking peacefully';
+
+        if (p.state === STATE_THINKING) {
+          stateBarColor = 'var(--state-thinking)';
+        } else if (p.state === STATE_HUNGRY) {
+          stateBarColor = 'var(--state-hungry)';
+          emoji = '😤';
+          subText = p.step === 0 ? 'Waiting for 1st fork' : 'Holds 1 fork, waiting';
+        } else if (p.state === STATE_EATING) {
+          stateBarColor = 'var(--state-eating)';
+          emoji = '😋';
+          subText = 'Dining happily';
+        }
+
+        btn.innerHTML = `
+          <div class="phil-info-left">
+            <span class="phil-avatar">${emoji}</span>
+            <div>
+              <span class="phil-name">Philosopher P${p.id}</span>
+              <span class="phil-status-sub">${subText}</span>
+            </div>
+          </div>
+          <div class="phil-meals-badge">${p.meals} 🍜</div>
+          <div class="phil-btn-bar" style="background:${stateBarColor}"></div>
+        `;
+
+        btn.addEventListener('click', () => stepPhilosopher(p.id));
+        btnContainer.appendChild(btn);
+      });
+
+      // 3. State Table
+      const tableBody = document.getElementById('stateTableBody');
+      tableBody.innerHTML = '';
+      philosophers.forEach(p => {
+        const tr = document.createElement('tr');
+
+        let badgeClass = 'thinking';
+        if (p.state === STATE_HUNGRY) badgeClass = 'hungry';
+        if (p.state === STATE_EATING) badgeClass = 'eating';
+
+        tr.innerHTML = `
+          <td style="font-weight:700; font-family:var(--font-code); color:#fff;">P${p.id}</td>
+          <td><span class="status-badge ${badgeClass}">${p.state}</span></td>
+          <td><span class="fork-tag ${p.leftForkHeld ? 'held' : 'free'}">${p.leftForkHeld ? '● Held' : '○ Free'}</span></td>
+          <td><span class="fork-tag ${p.rightForkHeld ? 'held' : 'free'}">${p.rightForkHeld ? '● Held' : '○ Free'}</span></td>
+          <td style="font-weight:700; font-family:var(--font-code); color:#fff;">${p.meals}</td>
+        `;
+        tableBody.appendChild(tr);
+      });
+
+      // 4. State Arrays
+      const arrStates = document.getElementById('arrayStates');
+      const arrSem = document.getElementById('arraySemaphores');
+      const arrMeals = document.getElementById('arrayMeals');
+
+      arrStates.innerHTML = '';
+      philosophers.forEach(p => {
+        const cell = document.createElement('div');
+        const char = p.state[0];
+        cell.className = `array-cell cell-${char.toLowerCase()}`;
+        cell.textContent = `P${p.id}:${char}`;
+        cell.title = `Philosopher ${p.id}: ${p.state}`;
+        arrStates.appendChild(cell);
+      });
+
+      arrSem.innerHTML = '';
+      chopsticks.forEach((val, idx) => {
+        const cell = document.createElement('div');
+        cell.className = `array-cell ${val === 1 ? 'cell-free' : 'cell-held'}`;
+        cell.textContent = `C${idx}:${val}`;
+        cell.title = `Chopstick ${idx}: ${val === 1 ? 'Free (1)' : 'Held (0)'}`;
+        arrSem.appendChild(cell);
+      });
+
+      arrMeals.innerHTML = '';
+      philosophers.forEach(p => {
+        const cell = document.createElement('div');
+        cell.className = 'array-cell';
+        cell.textContent = `${p.meals}`;
+        arrMeals.appendChild(cell);
+      });
+
+      // 5. Statistics Live Counters
+      const countThinking = philosophers.filter(p => p.state === STATE_THINKING).length;
+      const countHungry = philosophers.filter(p => p.state === STATE_HUNGRY).length;
+      const countEating = philosophers.filter(p => p.state === STATE_EATING).length;
+
+      document.getElementById('statThinking').textContent = countThinking;
+      document.getElementById('statHungry').textContent = countHungry;
+      document.getElementById('statEating').textContent = countEating;
+      document.getElementById('statDeadlock').textContent = deadlockCount;
+    }
+
+    // --- CANVAS RENDERING (Crisp Monochromatic Palette, 60 FPS) ---
+    function renderCanvas() {
+      const width = canvas.width;
+      const height = canvas.height;
+      const centerX = width / 2;
+      const centerY = height / 2;
+      const tableRadius = 140;
+      const philOrbitRadius = 195;
+      const forkOrbitRadius = 125;
+
+      ctx.clearRect(0, 0, width, height);
+
+      // 1. Light canvas surface
+      ctx.fillStyle = '#eef3fb';
+      ctx.beginPath();
+      ctx.arc(centerX, centerY, width / 2, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Subtle border line around outer canvas boundary
+      ctx.strokeStyle = '#cbd5e1';
+      ctx.lineWidth = 1;
+      ctx.stroke();
+
+      // 2. Circular dining table
+      ctx.fillStyle = '#ffffff';
+      ctx.beginPath();
+      ctx.arc(centerX, centerY, tableRadius, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Subtle border ring around dining table
+      ctx.strokeStyle = '#b8c7da';
+      ctx.lineWidth = 1.5;
+      ctx.stroke();
+
+      // Inner decorative subtle ring
+      ctx.strokeStyle = '#d9e2ef';
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.arc(centerX, centerY, tableRadius - 16, 0, Math.PI * 2);
+      ctx.stroke();
+
+      // Noodle bowl emoji in center of table
+      ctx.font = '38px "Apple Color Emoji", "Segoe UI Emoji", sans-serif';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText('🍜', centerX, centerY - 2);
+
+      // "Press START to begin" banner when stopped
+      if (!isStarted) {
+        ctx.fillStyle = '#64748b';
+        ctx.font = '600 13px "Outfit", sans-serif';
+        ctx.fillText('Press START to begin', centerX, centerY + 46);
+        requestAnimationFrame(renderCanvas);
+        return;
+      }
+
+      // Calculate node positions
+      const philPositions = [];
+      const forkPositions = [];
+
+      for (let i = 0; i < N; i++) {
+        const angle = -Math.PI / 2 + (i * 2 * Math.PI) / N;
+        philPositions.push({
+          x: centerX + Math.cos(angle) * philOrbitRadius,
+          y: centerY + Math.sin(angle) * philOrbitRadius,
+          angle: angle
+        });
+
+        const forkAngle = angle + Math.PI / N;
+        forkPositions.push({
+          x: centerX + Math.cos(forkAngle) * forkOrbitRadius,
+          y: centerY + Math.sin(forkAngle) * forkOrbitRadius,
+          angle: forkAngle
+        });
+      }
+
+      // Draw clean crisp dashed connection lines from philosophers to held chopsticks
+      philosophers.forEach(p => {
+        const pPos = philPositions[p.id];
+        const leftForkIdx = getLeftForkIdx(p.id);
+        const rightForkIdx = getRightForkIdx(p.id);
+
+        ctx.save();
+        ctx.lineWidth = 1.5;
+        ctx.setLineDash([3, 3]);
+
+        if (p.leftForkHeld) {
+          const fPos = forkPositions[leftForkIdx];
+          ctx.strokeStyle = (p.state === STATE_EATING) ? '#4ade80' : '#facc15';
+          ctx.beginPath();
+          ctx.moveTo(pPos.x, pPos.y);
+          ctx.lineTo(fPos.x, fPos.y);
+          ctx.stroke();
+        }
+
+        if (p.rightForkHeld) {
+          const fPos = forkPositions[rightForkIdx];
+          ctx.strokeStyle = (p.state === STATE_EATING) ? '#4ade80' : '#facc15';
+          ctx.beginPath();
+          ctx.moveTo(pPos.x, pPos.y);
+          ctx.lineTo(fPos.x, fPos.y);
+          ctx.stroke();
+        }
+        ctx.restore();
+      });
+
+      // a. Chopstick nodes (Ci)
+      forkPositions.forEach((pos, idx) => {
+        const isFree = chopsticks[idx] === 1;
+        const strokeColor = isFree ? '#34d399' : '#f87171';
+
+        // Base circle node
+        ctx.fillStyle = '#ffffff';
+        ctx.strokeStyle = strokeColor;
+        ctx.lineWidth = 1.5;
+        ctx.beginPath();
+        ctx.arc(pos.x, pos.y, 15, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.stroke();
+
+        // Chopsticks parallel lines
+        ctx.save();
+        ctx.translate(pos.x, pos.y);
+        ctx.rotate(pos.angle + Math.PI / 2);
+        ctx.strokeStyle = strokeColor;
+        ctx.lineWidth = 2;
+        ctx.lineCap = 'round';
+
+        ctx.beginPath();
+        ctx.moveTo(-3.5, -7);
+        ctx.lineTo(-3.5, 7);
+        ctx.moveTo(3.5, -7);
+        ctx.lineTo(3.5, 7);
+        ctx.stroke();
+        ctx.restore();
+
+        // Label "Ci"
+        ctx.fillStyle = '#64748b';
+        ctx.font = '600 11px "Fira Code", monospace';
+        ctx.textAlign = 'center';
+        ctx.fillText(`C${idx}`, pos.x, pos.y + 24);
+      });
+
+      // b. Philosopher nodes (Pi)
+      philosophers.forEach(p => {
+        const pos = philPositions[p.id];
+        let strokeColor = '#3b82f6'; // Thinking
+        let emoji = '🤔';
+        let baseRadius = 25;
+
+        if (p.state === STATE_HUNGRY) {
+          strokeColor = '#facc15';
+          emoji = '😤';
+        } else if (p.state === STATE_EATING) {
+          strokeColor = '#4ade80';
+          emoji = '😋';
+          baseRadius = 28;
+        }
+
+        // Crisp solid philosopher circle
+        ctx.fillStyle = '#f8fbff';
+        ctx.strokeStyle = strokeColor;
+        ctx.lineWidth = (p.state === STATE_EATING) ? 2.5 : 2;
+        ctx.beginPath();
+        ctx.arc(pos.x, pos.y, baseRadius, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.stroke();
+
+        // Emoji inside
+        ctx.font = '20px "Apple Color Emoji", "Segoe UI Emoji", sans-serif';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(emoji, pos.x, pos.y);
+
+        // Label "Pi"
+        const labelOffset = 40;
+        const lx = pos.x + Math.cos(pos.angle) * labelOffset;
+        const ly = pos.y + Math.sin(pos.angle) * labelOffset;
+
+        ctx.fillStyle = '#0f172a';
+        ctx.font = '700 12px "Outfit", sans-serif';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(`P${p.id}`, lx, ly);
+
+        // Meal count indicator badge
+        if (p.meals > 0) {
+          const bx = pos.x + 18;
+          const by = pos.y - 18;
+          ctx.fillStyle = '#e2e8f0';
+          ctx.strokeStyle = '#4ade80';
+          ctx.lineWidth = 1;
+          ctx.beginPath();
+          ctx.arc(bx, by, 9, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.stroke();
+
+          ctx.fillStyle = '#0f172a';
+          ctx.font = '700 10px "Inter", sans-serif';
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+          ctx.fillText(`${p.meals}`, bx, by);
+        }
+      });
+
+      requestAnimationFrame(renderCanvas);
+    }
+
+    // --- AUTO MODE SIMULATION ENGINE ---
+    function toggleAuto(forceState) {
+      isAuto = (forceState !== undefined) ? forceState : !isAuto;
+      const btn = document.getElementById('btnAuto');
+
+      if (isAuto) {
+        if (!isStarted) {
+          isStarted = true;
+          document.getElementById('btnStart').textContent = '⏸ PAUSE';
+          document.getElementById('btnStart').classList.add('running');
+        }
+        btn.classList.add('active');
+        btn.innerHTML = '⚡ AUTO ON';
+        logEvent('Auto mode enabled. Philosophers will run autonomously.', 'eating');
+        setComment('Auto Mode is running: philosophers advance dynamically based on speed.');
+        scheduleAutoStep();
+      } else {
+        btn.classList.remove('active');
+        btn.innerHTML = '⚡ AUTO';
+        if (autoIntervalId) clearTimeout(autoIntervalId);
+        logEvent('Auto mode stopped.', 'thinking');
+      }
+      updateUI();
+    }
+
+    function scheduleAutoStep() {
+      if (!isAuto || isDeadlocked) return;
+
+      const baseDelay = 1000;
+      const delay = Math.max(180, baseDelay / speedMultiplier);
+
+      autoIntervalId = setTimeout(() => {
+        if (!isAuto || isDeadlocked) return;
+
+        const candidates = [];
+        philosophers.forEach(p => {
+          if (p.state === STATE_EATING) candidates.push(p.id, p.id, p.id);
+          else if (p.state === STATE_HUNGRY) candidates.push(p.id, p.id);
+          else candidates.push(p.id);
+        });
+
+        if (candidates.length > 0) {
+          const chosen = candidates[Math.floor(Math.random() * candidates.length)];
+          stepPhilosopher(chosen);
+        }
+
+        scheduleAutoStep();
+      }, delay);
+    }
+
+    // --- EVENT LISTENERS ---
+    // Start / Pause
+    document.getElementById('btnStart').addEventListener('click', () => {
+      if (!isStarted) {
+        isStarted = true;
+        document.getElementById('btnStart').textContent = '⏸ PAUSE';
+        document.getElementById('btnStart').classList.add('running');
+        logEvent('Simulation started! Click philosopher buttons or enable Auto.', 'fork');
+        setComment('Simulation started! You can now manually step philosophers or click AUTO.');
+      } else {
+        isStarted = false;
+        if (isAuto) toggleAuto(false);
+        document.getElementById('btnStart').textContent = '▶ RESUME';
+        document.getElementById('btnStart').classList.remove('running');
+        logEvent('Simulation paused.', 'thinking');
+        setComment('Simulation paused.');
+      }
+      updateUI();
+    });
+
+    // Reset
+    document.getElementById('btnReset').addEventListener('click', () => {
+      if (isAuto) toggleAuto(false);
+      isStarted = false;
+      document.getElementById('btnStart').textContent = '▶ START';
+      document.getElementById('btnStart').classList.remove('running');
+      initSimulation();
+    });
+
+    // Auto
+    document.getElementById('btnAuto').addEventListener('click', () => {
+      toggleAuto();
+    });
+
+    // Philosopher count buttons
+    document.querySelectorAll('#philCountSelector .segmented-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('#philCountSelector .segmented-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        N = parseInt(btn.dataset.count, 10);
+        if (isAuto) toggleAuto(false);
+        isStarted = false;
+        document.getElementById('btnStart').textContent = '▶ START';
+        document.getElementById('btnStart').classList.remove('running');
+        initSimulation();
+      });
+    });
+
+    // Solution selector buttons
+    document.querySelectorAll('#solutionSelector .segmented-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('#solutionSelector .segmented-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        solutionType = btn.dataset.sol;
+        logEvent(`Concurrency strategy switched to: ${solutionType.toUpperCase()}`, 'fork');
+        setComment(`Strategy set to ${solutionType === 'naive' ? 'Naive (potential circular wait)' : 'Asymmetric (P' + (N-1) + ' reverses fork order to avoid deadlock)'}.`);
+        if (isDeadlocked) {
+          isDeadlocked = false;
+          document.getElementById('deadlockBanner').classList.add('hidden');
+        }
+        updateUI();
+      });
+    });
+
+    // Clear event log
+    document.getElementById('btnClearLog').addEventListener('click', () => {
+      document.getElementById('eventLogContainer').innerHTML = '';
+      logEvent('Log stream cleared.', 'fork');
+    });
+
+    // Modals
+    const modalInst = document.getElementById('modalInstructions');
+    const modalComp = document.getElementById('modalComponents');
+
+    document.getElementById('btnInstructions').addEventListener('click', () => modalInst.classList.add('open'));
+    document.getElementById('btnComponents').addEventListener('click', () => modalComp.classList.add('open'));
+
+    document.querySelectorAll('.modal-close-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const id = btn.getAttribute('data-close');
+        document.getElementById(id).classList.remove('open');
+      });
+    });
+
+    [modalInst, modalComp].forEach(m => {
+      m.addEventListener('click', (e) => {
+        if (e.target === m) m.classList.remove('open');
+      });
+    });
+
+    // Mobile Navigation Tab Switcher
+    document.querySelectorAll('.tab-btn').forEach(tab => {
+      tab.addEventListener('click', () => {
+        document.querySelectorAll('.tab-btn').forEach(t => t.classList.remove('active'));
+        tab.classList.add('active');
+
+        const targetId = tab.dataset.target;
+        document.querySelectorAll('.panel').forEach(p => p.classList.remove('active-panel'));
+        const activeP = document.getElementById(targetId);
+        if (activeP) activeP.classList.add('active-panel');
+      });
+    });
+
+    // --- BOOTSTRAP ---
+    initSimulation();
+    renderCanvas();
+  </script>
+</body></html>
